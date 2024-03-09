@@ -1,7 +1,10 @@
 import numpy as np
 import cv2
 
-class_names = ['chessboard']
+
+class_names = ['chessboard', 'B', "K", "N",
+               "P", "Q", "R", "b", "k", "n", "p", "q", "r"]
+
 
 # Create a list of colors for each class where each color is a tuple of 3 integer values
 rng = np.random.default_rng(3)
@@ -65,7 +68,7 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3, mask_maps=None):
+def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3, mask_maps=None, class_names=class_names):
     img_height, img_width = image.shape[:2]
     size = min([img_height, img_width]) * 0.0006
     text_thickness = int(min([img_height, img_width]) * 0.001)
@@ -79,7 +82,7 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3, mask_maps=N
         x1, y1, x2, y2 = box.astype(int)
 
         # Draw rectangle
-        cv2.rectangle(mask_img, (x1, y1), (x2, y2), color, 2)
+        cv2.rectangle(mask_img, (x1, y1), (x2, y2), color, 2)  # type: ignore
 
         label = class_names[class_id]
         caption = f'{label} {int(score * 100)}%'
@@ -88,7 +91,7 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3, mask_maps=N
         th = int(th * 1.2)
 
         cv2.rectangle(mask_img, (x1, y1),
-                      (x1 + tw, y1 - th), color, -1)
+                      (x1 + tw, y1 - th), color, -1)  # type: ignore
 
         cv2.putText(mask_img, caption, (x1, y1),
                     cv2.FONT_HERSHEY_SIMPLEX, size, (255, 255, 255), text_thickness, cv2.LINE_AA)
@@ -107,7 +110,8 @@ def draw_masks(image, boxes, class_ids, mask_alpha=0.3, mask_maps=None):
 
         # Draw fill mask image
         if mask_maps is None:
-            cv2.rectangle(mask_img, (x1, y1), (x2, y2), color, -1)
+            cv2.rectangle(mask_img, (x1, y1), (x2, y2),
+                          color, -1)  # type: ignore
         else:
             crop_mask = mask_maps[i][y1:y2, x1:x2, np.newaxis]
             crop_mask_img = mask_img[y1:y2, x1:x2]

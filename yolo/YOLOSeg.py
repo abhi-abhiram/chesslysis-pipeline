@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import onnxruntime
 
-from yoloseg.utils import xywh2xyxy, nms, draw_detections, sigmoid
+from yolo.utils import xywh2xyxy, nms, draw_detections, sigmoid
 
 
 class YOLOSeg:
@@ -21,9 +21,8 @@ class YOLOSeg:
         return self.segment_objects(image)
 
     def initialize_model(self, path):
-        self.session = onnxruntime.InferenceSession(path,
-                                                    providers=['CUDAExecutionProvider',
-                                                               'CPUExecutionProvider'])
+        self.session = onnxruntime.InferenceSession(
+            path, providers=['CPUExecutionProvider'])
         # Get model info
         self.get_input_details()
         self.get_output_details()
