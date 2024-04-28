@@ -152,3 +152,19 @@ def draw_comparison(img1, img2, name1, name2, fontsize=2.6, text_thickness=3):
         combined_img = cv2.resize(combined_img, (3840, 2160))
 
     return combined_img
+
+
+def multiclass_nms(boxes, scores, class_ids, iou_threshold):
+
+    unique_class_ids = np.unique(class_ids)
+
+    keep_boxes = []
+    for class_id in unique_class_ids:
+        class_indices = np.where(class_ids == class_id)[0]
+        class_boxes = boxes[class_indices, :]
+        class_scores = scores[class_indices]
+
+        class_keep_boxes = nms(class_boxes, class_scores, iou_threshold)
+        keep_boxes.extend(class_indices[class_keep_boxes])
+
+    return keep_boxes

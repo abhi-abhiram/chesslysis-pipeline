@@ -1,2 +1,2 @@
 from .YOLOSeg import YOLOSeg
-from .yoloobj import YOLOv7 as YOLOObj
+from .yoloobj import YOLOv8 as YOLOObj

@@ -64,36 +64,41 @@ class YOLOSeg:
         return outputs
 
     def process_box_output(self, box_output):
-        box_output = np.squeeze(box_output)
 
-        num_classes = box_output.shape[1] - self.num_masks - 5
+        # (1, 37, 8400)
+        # print(box_output.shape)
 
-        # Filter out predictions with low confidence
-        box_output = box_output[box_output[:, 4] > self.conf_threshold]
+        predictions = np.squeeze(box_output).T
 
-        # Filter based on class confidence
-        conf = box_output[..., [4]] * box_output[..., 5:]
-        class_scores = np.max(conf[:, :num_classes], axis=1)
-        box_output = box_output[class_scores > self.conf_threshold]
-        class_scores = class_scores[class_scores > self.conf_threshold]
+        num_classes = box_output.shape[1] - self.num_masks - 4
 
-        if len(class_scores) == 0:
-            return [], [], [], None
+        # Filter out object confidence scores below threshold
+        scores = np.max(predictions[:, 4:4+num_classes], axis=1)
 
-        # Extract box and mask predictions (:num_classes+5 is box, the rest is mask)
-        box_predictions = box_output[..., :num_classes + 5]
-        mask_predictions = box_output[..., num_classes + 5:]
+        predictions = predictions[scores > self.conf_threshold, :]
 
+        scores = scores[scores > self.conf_threshold]
+
+        if len(scores) == 0:
+            return [], [], [], np.array([])
+
+        box_predictions = predictions[..., :num_classes+4]
+        mask_predictions = predictions[..., num_classes+4:]
+
+        # Get the class with the highest confidence
+        class_ids = np.argmax(box_predictions[:, 4:], axis=1)
+
+        # Get bounding boxes for each object
         boxes = self.extract_boxes(box_predictions)
-        class_ids = np.argmax(box_predictions[..., 5:], axis=1)
 
-        # Apply nms filtering
-        indices = nms(boxes, class_scores, self.iou_threshold)
-        return boxes[indices], class_scores[indices], class_ids[indices], mask_predictions[indices]
+        # Apply non-maxima suppression to suppress weak, overlapping bounding boxes
+        indices = nms(boxes, scores, self.iou_threshold)
+
+        return boxes[indices], scores[indices], class_ids[indices], mask_predictions[indices]
 
     def process_mask_output(self, mask_predictions, mask_output):
 
-        if mask_predictions is None:
+        if mask_predictions.shape[0] == 0:
             return []
 
         mask_output = np.squeeze(mask_output)
@@ -126,6 +131,7 @@ class YOLOSeg:
             y2 = int(math.ceil(self.boxes[i][3]))
 
             scale_crop_mask = masks[i][scale_y1:scale_y2, scale_x1:scale_x2]
+
             crop_mask = cv2.resize(scale_crop_mask,
                                    (x2 - x1, y2 - y1),
                                    interpolation=cv2.INTER_CUBIC)
