@@ -70,6 +70,8 @@ class YOLOSeg:
 
         predictions = np.squeeze(box_output).T
 
+        print(predictions.shape)
+
         num_classes = box_output.shape[1] - self.num_masks - 4
 
         # Filter out object confidence scores below threshold
@@ -94,6 +96,8 @@ class YOLOSeg:
         # Apply non-maxima suppression to suppress weak, overlapping bounding boxes
         indices = nms(boxes, scores, self.iou_threshold)
 
+        print(boxes.shape)
+
         return boxes[indices], scores[indices], class_ids[indices], mask_predictions[indices]
 
     def process_mask_output(self, mask_predictions, mask_output):
@@ -103,10 +107,17 @@ class YOLOSeg:
 
         mask_output = np.squeeze(mask_output)
 
+        print(mask_output.shape)
+
         # Calculate the mask maps for each box
         num_mask, mask_height, mask_width = mask_output.shape  # CHW
         masks = sigmoid(mask_predictions @ mask_output.reshape((num_mask, -1)))
+
+        print(mask_output.reshape((num_mask, -1)).shape)
+
         masks = masks.reshape((-1, mask_height, mask_width))
+
+        print(masks.shape)
 
         # Downscale the boxes to match the mask size
         scale_boxes = self.rescale_boxes(self.boxes,

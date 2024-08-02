@@ -95,7 +95,7 @@ def detect_pieces(image):
         return
 
     # chess pieces detection
-    yoloobj = YOLOObj('./models/chess_pieces.onnx')
+    yoloobj = YOLOObj('./models/chesspieces-v8.onnx')
 
     yoloobj(board)
 
